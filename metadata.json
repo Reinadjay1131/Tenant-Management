@@ -1,0 +1,5 @@
+{
+  "name": "Tenant Management",
+  "description": "A comprehensive tenant management system for property managers to oversee tenant data, payments, and maintenance requests, with a dedicated portal for tenants to manage their needs.",
+  "requestFramePermissions": []
+}
