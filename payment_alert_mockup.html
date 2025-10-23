@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Alert Mockup - Tenant Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-custom {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">🚨 Payment Alert Demonstration</h1>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">🏢 Mmaduabuchi Lodge - Current Tenants</h2>
+            
+            <!-- Normal Tenant Card (No Alert) -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-600 mb-2">✅ Normal Tenant (No Payment Due)</h3>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 text-lg">👤</span>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">John Doe</div>
+                                <div class="text-sm text-gray-600">Unit A12</div>
+                                <div class="text-sm text-gray-500">2-bedroom apartment</div>
+                                <div class="text-sm text-gray-500">john@example.com</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold text-green-600">₦50,000/mo</div>
+                            <div class="text-xs text-gray-500">9/15/2025</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Due Alert Card -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-orange-600 mb-2">⚠️ PAYMENT DUE ALERT (Shows when payment due within 30 days)</h3>
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 text-lg">👤</span>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">Sarah Johnson</div>
+                                <div class="text-sm text-gray-600">Unit B05</div>
+                                <div class="text-sm text-gray-500">3-bedroom apartment</div>
+                                <div class="text-sm text-gray-500">sarah@example.com</div>
+                                <!-- PAYMENT ALERT INDICATOR -->
+                                <div class="flex items-center gap-2 mt-1">
+                                    <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse-custom"></div>
+                                    <span class="text-orange-600 text-xs font-medium">
+                                        Payment due in 15 days
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold text-green-600">₦75,000/mo</div>
+                            <div class="text-xs text-gray-500">10/8/2025</div>
+                            <!-- DUE SOON BADGE -->
+                            <div class="mt-1">
+                                <span class="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-medium">
+                                    Due Soon
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Critical Alert (Very Soon) -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-red-600 mb-2">🔥 CRITICAL ALERT (Payment due very soon)</h3>
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 text-lg">👤</span>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">Michael Chen</div>
+                                <div class="text-sm text-gray-600">Unit C18</div>
+                                <div class="text-sm text-gray-500">Studio apartment</div>
+                                <div class="text-sm text-gray-500">michael@example.com</div>
+                                <!-- CRITICAL ALERT INDICATOR -->
+                                <div class="flex items-center gap-2 mt-1">
+                                    <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse-custom"></div>
+                                    <span class="text-orange-600 text-xs font-medium">
+                                        Payment due in 3 days
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold text-green-600">₦30,000/mo</div>
+                            <div class="text-xs text-gray-500">9/26/2025</div>
+                            <!-- DUE SOON BADGE -->
+                            <div class="mt-1">
+                                <span class="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-medium">
+                                    Due Soon
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Features Explanation -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">🎯 Alert Features Breakdown</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-orange-50 border border-orange-200 rounded flex-shrink-0 mt-1"></div>
+                        <div>
+                            <div class="font-medium text-gray-900">Orange Background</div>
+                            <div class="text-sm text-gray-600">Card changes from gray to orange highlight</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 bg-orange-500 rounded-full animate-pulse-custom mt-3"></div>
+                        <div>
+                            <div class="font-medium text-gray-900">Pulsing Alert Dot</div>
+                            <div class="text-sm text-gray-600">Animated orange dot draws attention</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <span class="text-orange-600 text-sm font-medium mt-1">⚠️</span>
+                        <div>
+                            <div class="font-medium text-gray-900">Warning Message</div>
+                            <div class="text-sm text-gray-600">"Payment due in X days" in orange text</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <span class="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-medium mt-1">Due Soon</span>
+                        <div>
+                            <div class="font-medium text-gray-900">Due Soon Badge</div>
+                            <div class="text-sm text-gray-600">Orange badge in payment section</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-start space-x-2">
+                    <span class="text-blue-600 text-lg">ℹ️</span>
+                    <div>
+                        <div class="font-medium text-blue-900">Alert Trigger</div>
+                        <div class="text-sm text-blue-700">
+                            Alerts appear automatically when payment is due within 30 days, based on lease start date and payment frequency (weekly/monthly/annual).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
