@@ -401,10 +401,15 @@ const SimpleDashboard = () => {
                         </button>
                         <button 
                           onClick={() => openMaintenanceModal(property)}
-                          className="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1"
+                          className="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1 relative"
                         >
                           <span>🔧</span>
                           <span>Maintenance</span>
+                          {getMaintenanceStats(property.id).open > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold shadow-md animate-pulse" title="Open maintenance requests">
+                              {getMaintenanceStats(property.id).open}
+                            </span>
+                          )}
                         </button>
                       </div>
 
