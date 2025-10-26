@@ -1,0 +1,44 @@
+Tenant Management System - Run Instructions
+===========================================
+
+1. Install Node.js (only once on your computer, skip if already installed).
+   - Download from https://nodejs.org
+
+2. Open a terminal and go to your project root:
+   cd C:\Users\user\Downloads\Tenant-Management
+
+3. Install frontend dependencies:
+   npm install
+
+4. Go to the backend folder:
+   cd backend
+
+5. Install backend dependencies:
+   npm install
+
+6. Start the backend server:
+   npm run dev
+   (Leave this terminal open and running.)
+
+7. Open a new terminal window/tab. Go to the project root:
+   cd C:\Users\user\Downloads\Tenant-Management
+
+8. Start the frontend (React) app:
+   npm run dev
+
+9. Open your browser and go to the address shown in the terminal (e.g., http://localhost:5173 or http://localhost:3000)
+
+
+---
+
+Registering a New User
+----------------------
+To register a new user, open PowerShell and run:
+
+Invoke-RestMethod -Uri "http://localhost:5000/api/register" -Method Post -ContentType "application/json" -Body '{"username":"newuser","password":"newpassword","role":"manager"}'
+
+Replace "newuser", "newpassword", and "manager" with your desired username, password, and role (admin, manager, or tenant).
+
+After registering, you can log in from the frontend with the new credentials.
+
+Follow these steps each time you want to run the system.

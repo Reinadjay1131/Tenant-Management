@@ -1,8 +1,34 @@
+// All app.* route definitions must come after app and middleware initialization!
+// All app.* route definitions must come after app and middleware initialization!
+// JWT authentication middleware
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+  jwt.verify(token, 'your_jwt_secret', (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+}
+
+// Role-based authorization middleware
+function authorizeRoles(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Forbidden: insufficient role' });
+    }
+    next();
+  };
+}
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -151,6 +177,18 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (propertyId) REFERENCES properties (id)
   )`);
+
+  // Users table for authentication
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('admin', 'manager', 'tenant')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+  // Add reset_token and reset_token_expiry columns if not exist
+  db.run('ALTER TABLE users ADD COLUMN reset_token TEXT', [], (err) => {});
+  db.run('ALTER TABLE users ADD COLUMN reset_token_expiry INTEGER', [], (err) => {});
 });
 
 // Helper function to promisify database operations
@@ -201,8 +239,77 @@ app.get('/', (req, res) => {
 
 // API Routes
 
+// User registration
+app.post('/api/register', async (req, res) => {
+  const crypto = require('crypto');
+  try {
+    const { username, password, role } = req.body;
+    if (!username || !password || !role) {
+      return res.status(400).json({ error: 'Username, password, and role are required.' });
+    }
+    // Check if user exists
+    const existing = await dbGet('SELECT * FROM users WHERE username = ?', [username]);
+    if (existing) {
+      return res.status(409).json({ error: 'Username already exists.' });
+    }
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const id = require('crypto').randomUUID ? require('crypto').randomUUID() : uuidv4();
+  await dbRun('INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)', [id, username, hashedPassword, role]);
+  res.status(201).json({ message: 'User registered successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Forgot Password endpoint
+app.post('/api/forgot-password', (req, res) => {
+  const crypto = require('crypto');
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!user) {
+      // Respond with success even if user not found (to prevent user enumeration)
+      return res.json({ message: 'If the username exists, a reset link will be sent.' });
+    }
+    // Generate a reset token and expiry (1 hour)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiry = Date.now() + 60 * 60 * 1000;
+    db.run('UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?', [resetToken, expiry, user.id], (err2) => {
+      if (err2) return res.status(500).json({ error: 'Failed to set reset token' });
+      // In a real app, send email with reset link. For now, log to console.
+      console.log(`Password reset link for ${username}: http://localhost:5173/reset-password?token=${resetToken}`);
+      res.json({ message: 'If the username exists, a reset link will be sent.' });
+    });
+  });
+});
+
+// User login
+app.post('/api/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required.' });
+    }
+    const user = await dbGet('SELECT * FROM users WHERE username = ?', [username]);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
+    // Generate JWT
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, 'your_jwt_secret', { expiresIn: '1d' });
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Properties routes
-app.get('/api/properties', async (req, res) => {
+app.get('/api/properties', authenticateToken, async (req, res) => {
   try {
     const properties = await dbAll('SELECT * FROM properties ORDER BY created_at DESC');
     res.json(properties);
@@ -211,7 +318,7 @@ app.get('/api/properties', async (req, res) => {
   }
 });
 
-app.post('/api/properties', async (req, res) => {
+app.post('/api/properties', authenticateToken, authorizeRoles('admin', 'manager'), async (req, res) => {
   try {
     const { name, address, imageUrl, capacity } = req.body;
     const id = uuidv4();
@@ -229,7 +336,7 @@ app.post('/api/properties', async (req, res) => {
 });
 
 // Tenants routes
-app.get('/api/tenants', async (req, res) => {
+app.get('/api/tenants', authenticateToken, async (req, res) => {
   try {
     const { propertyId } = req.query;
     let sql = 'SELECT * FROM tenants';
@@ -248,7 +355,7 @@ app.get('/api/tenants', async (req, res) => {
   }
 });
 
-app.post('/api/tenants', async (req, res) => {
+app.post('/api/tenants', authenticateToken, authorizeRoles('admin', 'manager'), async (req, res) => {
   try {
     const { propertyId, name, email, phone, apartmentNumber, apartmentType, leaseStartDate, leaseEndDate, rentAmount, paymentFrequency, profilePicture } = req.body;
     const id = uuidv4();
@@ -272,7 +379,7 @@ app.post('/api/tenants', async (req, res) => {
   }
 });
 
-app.put('/api/tenants/:id', async (req, res) => {
+app.put('/api/tenants/:id', authenticateToken, authorizeRoles('admin', 'manager'), async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -293,7 +400,7 @@ app.put('/api/tenants/:id', async (req, res) => {
 });
 
 // Payments routes
-app.get('/api/payments', async (req, res) => {
+app.get('/api/payments', authenticateToken, async (req, res) => {
   try {
     const { propertyId } = req.query;
     let sql = `
@@ -485,6 +592,62 @@ app.get('/api', (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Tenant Management API is running' });
+});
+
+// Reset Password endpoint
+app.post('/api/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Token and new password required' });
+  db.get('SELECT * FROM users WHERE reset_token = ?', [token], async (err, user) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!user) return res.status(400).json({ error: 'Invalid or expired token' });
+    if (!user.reset_token_expiry || user.reset_token_expiry < Date.now()) {
+      return res.status(400).json({ error: 'Token expired' });
+    }
+    const hashedPassword = await require('bcrypt').hash(password, 10);
+    db.run('UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?', [hashedPassword, user.id], (err2) => {
+      if (err2) return res.status(500).json({ error: 'Failed to reset password' });
+      res.json({ message: 'Password has been reset. You can now log in.' });
+    });
+  });
+});
+
+// Update user profile (username and/or password)
+app.put('/api/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { username, password } = req.body;
+    if (!username && !password) {
+      return res.status(400).json({ error: 'Nothing to update.' });
+    }
+    // Check if username is taken by another user
+    if (username) {
+      const existing = await dbGet('SELECT * FROM users WHERE username = ? AND id != ?', [username, userId]);
+      if (existing) {
+        return res.status(409).json({ error: 'Username already taken.' });
+      }
+    }
+    let updateSql = 'UPDATE users SET ';
+    const params = [];
+    if (username) {
+      updateSql += 'username = ?';
+      params.push(username);
+    }
+    if (password) {
+      if (username) updateSql += ', ';
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateSql += 'password = ?';
+      params.push(hashedPassword);
+    }
+    updateSql += ' WHERE id = ?';
+    params.push(userId);
+    await dbRun(updateSql, params);
+    // Return updated user info (without password)
+    const updatedUser = await dbGet('SELECT id, username, role, created_at FROM users WHERE id = ?', [userId]);
+    res.json({ user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Start server

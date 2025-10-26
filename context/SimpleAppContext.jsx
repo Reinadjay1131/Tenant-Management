@@ -20,18 +20,21 @@ export const SimpleAppContext = createContext({
 const apiService = {
   async request(endpoint, options = {}) {
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const response = await fetch(`http://localhost:5000/api${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
         ...options,
+        headers,
       });
-      
       if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
       }
-      
       return await response.json();
     } catch (error) {
       console.error('API request failed:', error);

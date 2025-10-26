@@ -1,7 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { SimpleAppProvider, SimpleAppContext } from './context/SimpleAppContext.jsx';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+import Login from './components/Login.jsx';
+import Register from './components/Register.jsx';
+import Profile from './components/Profile.jsx';
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import SimpleDashboard from './components/SimpleDashboard.jsx';
+import { SimpleAppProvider } from './context/SimpleAppContext.jsx';
 
 // Property Form Modal Component
 const PropertyModal = ({ isOpen, onClose, onSave }) => {
@@ -9,6 +14,7 @@ const PropertyModal = ({ isOpen, onClose, onSave }) => {
   const [address, setAddress] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+      {page === 'reset-password' && <ForgotPassword onSwitchToLogin={() => setPage('login')} />}
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -297,18 +303,84 @@ const ManagerHomeComponent = () => {
   );
 };
 
+
 function App() {
-  console.log('App component rendering with simplified property management...');
+
+  const [auth, setAuth] = useState(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return token && user ? { token, user: JSON.parse(user) } : null;
+  });
+  const [showRegister, setShowRegister] = useState(false);
+
+  const handleLogin = (data) => {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setAuth({ token: data.token, user: data.user });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setAuth(null);
+  };
+
+  if (!auth) {
+    // Password reset routes for unauthenticated users
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (window.location.pathname === '/reset-password') {
+      if (token) {
+        return <ResetPassword token={token} onSwitchToLogin={() => setShowRegister(false)} />;
+      } else {
+        return <ForgotPassword onSwitchToLogin={() => setShowRegister(false)} />;
+      }
+    }
+    if (showRegister) {
+      return <Register onRegister={() => setShowRegister(false)} onSwitchToLogin={() => setShowRegister(false)} />;
+    }
+    return <Login onLogin={handleLogin} onSwitchToRegister={() => setShowRegister(true)} />;
+  }
+
   return (
     <SimpleAppProvider>
       <HashRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<SimpleDashboard />} />
-          <Route path="/home" element={<ManagerHomeComponent />} />
-        </Routes>
+        <Header auth={auth} onLogout={handleLogout} />
+        <div style={{minHeight: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column'}}>
+          <div style={{flex: 1}}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<SimpleDashboard />} />
+              <Route path="/home" element={<ManagerHomeComponent />} />
+            </Routes>
+          </div>
+          <footer className="w-full text-center text-xs text-gray-400 py-4 bg-white border-t">NOYB FUNDAMENTALS 2025 ©</footer>
+        </div>
       </HashRouter>
     </SimpleAppProvider>
+  );
+
+}
+
+function Header({ auth, onLogout }) {
+  return (
+    <div className="w-full bg-gradient-to-r from-blue-700 to-purple-700 shadow-lg mb-6">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+        <div className="flex items-center gap-2">
+          <img src="/zenith-logo-png_seeklogo-479185.png" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
+          <span className="text-white text-xl font-bold tracking-wide">Zenith Property Management</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-white text-sm font-medium">{auth.user.username} <span className="bg-white/20 text-xs px-2 py-1 rounded ml-2">{auth.user.role}</span></span>
+          <button
+            onClick={onLogout}
+            className="bg-white text-blue-700 font-semibold px-4 py-1 rounded-lg shadow hover:bg-blue-100 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
