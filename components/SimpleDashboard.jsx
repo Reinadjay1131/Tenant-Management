@@ -390,7 +390,6 @@ const SimpleDashboard = () => {
                         <span>👤</span>
                         <span>Add Tenant</span>
                       </button>
-                      
                       <div className="grid grid-cols-2 gap-3">
                         <button 
                           onClick={() => openPaymentModal(property)}
@@ -412,13 +411,6 @@ const SimpleDashboard = () => {
                           )}
                         </button>
                       </div>
-
-                      <button
-                        onClick={() => setExpandedProperty(isExpanded ? null : property.id)}
-                        className="w-full bg-gray-50 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                      >
-                        {isExpanded ? 'Hide Details' : 'View Details'}
-                      </button>
                     </div>
 
                     {/* Expanded Details */}
@@ -1266,6 +1258,12 @@ const SimpleDashboard = () => {
                                     Since {new Date(tenant.leaseStartDate).toLocaleDateString()}
                                   </div>
                                 )}
+                                <button
+                                  onClick={() => openEditTenantModal(tenant)}
+                                  className="mt-2 text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded border border-blue-200 hover:bg-blue-50 transition-colors"
+                                >
+                                  Edit
+                                </button>
                               </div>
                             </div>
                           </div>
